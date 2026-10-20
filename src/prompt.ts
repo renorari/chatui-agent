@@ -33,6 +33,15 @@ function toolCallBlock(name: string, args: unknown): string {
   return "```json\n" + JSON.stringify({ tool_call: { name, arguments: args } }) + "\n```";
 }
 
+/** Plausible arguments for the first tool, built from its schema, for the few-shot example. */
+function exampleArgs(tool: Tool): Record<string, unknown> {
+  const props = (tool.function.parameters as { properties?: Record<string, { type?: string }> })?.properties ?? {};
+  const required = (tool.function.parameters as { required?: string[] })?.required ?? Object.keys(props).slice(0, 1);
+  return Object.fromEntries(
+    required.map((k) => [k, props[k]?.type === "integer" || props[k]?.type === "number" ? 1 : /path|file/i.test(k) ? "config.yml" : "..."]),
+  );
+}
+
 function toolInstructions(tools: Tool[]): string {
   const list = tools
     .map((t) => {
@@ -42,8 +51,10 @@ function toolInstructions(tools: Tool[]): string {
     .join("\n\n");
   return [
     "# Tools",
-    "You are the reasoning engine of a coding agent running on the user's machine. You can call the tools below.",
-    "Do NOT use your own built-in tools (web browsing, code interpreter, canvas, artifacts); only these tools exist.",
+    "You are the reasoning engine of a coding agent. The user's files and shell are on THEIR machine, which you cannot reach directly.",
+    "The ONLY way to read files, edit files or run commands there is to call the tools below; the harness executes them and sends back the results.",
+    "Never use your own built-in tools (code interpreter / Python sandbox, web search, canvas, pages, artifacts): they run somewhere else and cannot see the user's files.",
+    "Never say you cannot access a path: call a tool instead. If the task needs information from the user's machine, your reply must be a tool call.",
     "",
     list,
     "",
@@ -52,11 +63,18 @@ function toolInstructions(tools: Tool[]): string {
     toolCallBlock("tool_name", { arg: "value" }),
     "`arguments` must be a JSON object matching the tool's schema. Results come back as TOOL RESULT messages.",
     "When no tool is needed, answer normally in Markdown without such blocks.",
+    "",
+    "## Example",
+    "USER: What does config.yml say?",
+    "ASSISTANT:",
+    toolCallBlock(tools[0].function.name, exampleArgs(tools[0])),
+    "(The harness runs it and replies with `### TOOL RESULT`; then you continue.)",
+    "Do not execute code yourself and do not look in /mnt/data or any sandbox: just emit the block.",
   ].join("\n");
 }
 
 const TOOL_REMINDER =
-  '(Reminder: to call a tool, reply with ```json {"tool_call": {"name": ..., "arguments": {...}}}``` blocks only.)';
+  '(Reminder: use only the listed tools, never your built-in sandbox. To call one, reply with ```json {"tool_call": {"name": ..., "arguments": {...}}}``` blocks.)';
 
 function renderMessage(m: Message): string {
   const text = textOf(m.content);

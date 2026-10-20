@@ -43,6 +43,11 @@
     "assistant": "[data-testid=\"markdown-reply\"]",
     "ignore": [
       "button"
-    ]
+    ],
+    "codeBlock": {
+      "selector": ".scriptor-component-code-block",
+      "lines": "[role=\"textbox\"] > div",
+      "lang": "[data-testid=\"one-copilot-code-identity\"]"
+    }
   }
 }

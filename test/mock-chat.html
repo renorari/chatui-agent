@@ -23,7 +23,7 @@ document.getElementById("send").onclick = async () => {
   document.getElementById("stop").style.display = "";
   const turns = document.querySelectorAll(".user").length;
   let html;
-  if (prompt.includes("tool_call") && !prompt.includes("### TOOL RESULT")) {
+  if (prompt.includes("tool_call") && !prompt.includes("### TOOL RESULT (")) {
     html = `<p>Let me read it.</p><pre><div>json<button>Copy</button></div><code class="language-json">{"tool_call": {"name": "read_file", "arguments": {"path": "a.txt"}}}</code></pre>`;
   } else {
     const lines = prompt.split("\n").length;

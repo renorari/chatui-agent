@@ -13,6 +13,8 @@ export type SiteConfig = {
   assistant: string;
   /** Elements removed from the reply before converting it to Markdown. */
   ignore?: string[];
+  /** Code blocks that are not plain <pre>: one element per line, with a separate language label. */
+  codeBlock?: { selector: string; lines: string; lang?: string };
   /** How text is put into a contenteditable input. Defaults to "paste". */
   inputMethod?: "paste" | "insertText";
 };
@@ -66,13 +68,16 @@ export class ChatTab {
     await this.submit();
 
     const deadline = Date.now() + this.opts.timeoutMs;
-    const read = { assistant: site.assistant, ignore: site.ignore ?? [] };
+    const read = { assistant: site.assistant, ignore: site.ignore ?? [], codeBlock: site.codeBlock };
     let text: string | null = null;
     let changedAt = Date.now();
     while (true) {
       if (Date.now() > deadline) throw new Error("timed out waiting for the reply");
       await sleep(300);
-      const next = await page.evaluate(readReply, read).catch(() => text);
+      const next = await page.evaluate(readReply, read).catch((err) => {
+        console.error(`[chatui-agent] reading the reply failed: ${err.message}`);
+        return text;
+      });
       if (next === null) continue; // not started yet
       if (next !== text) {
         text = next;
@@ -142,19 +147,33 @@ function pressEnter(selector: string): void {
 }
 
 /** Converts the newest unseen reply back into Markdown, keeping code blocks verbatim. null = no reply yet. */
-function readReply(a: { assistant: string; ignore: string[] }): string | null {
+function readReply(a: { assistant: string; ignore: string[]; codeBlock?: SiteConfig["codeBlock"] }): string | null {
   const fresh = document.querySelectorAll(`:is(${a.assistant}):not([data-chatui-seen])`);
   if (fresh.length === 0) return null;
   const el = fresh[fresh.length - 1].cloneNode(true) as Element;
 
-  // Code blocks are read before stripping, since their header/copy buttons live inside <pre>.
+  // Code blocks are read before stripping, since their header/copy buttons live inside them.
+  const fence = (lang: string, body: string) => {
+    const f = document.createElement("x-fence");
+    f.textContent = "```" + lang + "\n" + body.replace(/\n$/, "") + "\n```";
+    return f;
+  };
+  if (a.codeBlock) {
+    for (const block of Array.from(el.querySelectorAll(a.codeBlock.selector))) {
+      const lang = (a.codeBlock.lang ? block.querySelector(a.codeBlock.lang)?.textContent ?? "" : "").trim().toLowerCase();
+      // Some editors interleave empty spacer rows; keep only rows shaped like the ones holding text.
+      const rows = Array.from(block.querySelectorAll(a.codeBlock.lines));
+      const lineClass = rows.find((r) => r.textContent)?.className;
+      const lines = rows
+        .filter((r) => lineClass === undefined || r.className === lineClass)
+        .map((l) => (l.textContent ?? "").replace(/^\n|\n$/g, ""));
+      block.replaceWith(fence(lang, lines.join("\n")));
+    }
+  }
   for (const pre of Array.from(el.querySelectorAll("pre"))) {
     const code = pre.querySelector("code");
     const lang = /language-([\w+#.-]+)/.exec(code?.className ?? "")?.[1] ?? "";
-    const body = (code ?? pre).textContent ?? "";
-    const fenced = document.createElement("x-fence");
-    fenced.textContent = "```" + lang + "\n" + body.replace(/\n$/, "") + "\n```";
-    pre.replaceWith(fenced);
+    pre.replaceWith(fence(lang, (code ?? pre).textContent ?? ""));
   }
   for (const sel of a.ignore) el.querySelectorAll(sel).forEach((n) => n.remove());
 

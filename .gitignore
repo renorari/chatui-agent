@@ -3,3 +3,4 @@ profile/
 *.log
 .DS_Store
 server.log
+copilot.log
