@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mock Chat</title>
+<div id="log"></div>
+<div id="input" contenteditable="true" style="border:1px solid #888;min-height:2em"></div>
+<button id="send">Send</button>
+<button id="stop" style="display:none">Stop</button>
+<script>
+// Mimics a chat UI: accepts pasted text, streams a reply into an assistant bubble.
+const input = document.getElementById("input");
+input.addEventListener("paste", (e) => {
+  e.preventDefault();
+  input.textContent += e.clipboardData.getData("text/plain");
+});
+document.getElementById("send").onclick = async () => {
+  const prompt = input.textContent;
+  input.textContent = "";
+  const u = document.createElement("div");
+  u.className = "user"; u.textContent = prompt;
+  const a = document.createElement("div");
+  a.className = "assistant";
+  document.getElementById("log").append(u, a);
+  document.getElementById("stop").style.display = "";
+  const turns = document.querySelectorAll(".user").length;
+  let html;
+  if (prompt.includes("tool_call") && !prompt.includes("### TOOL RESULT")) {
+    html = `<p>Let me read it.</p><pre><div>json<button>Copy</button></div><code class="language-json">{"tool_call": {"name": "read_file", "arguments": {"path": "a.txt"}}}</code></pre>`;
+  } else {
+    const lines = prompt.split("\n").length;
+    html = `<p>Turn <strong>${turns}</strong>, got ${lines} lines.</p><ul><li>one</li><li>two</li></ul><pre><code class="language-python">print("hi")\n</code></pre>`;
+  }
+  for (let i = 1; i <= 5; i++) {
+    a.innerHTML = html.slice(0, Math.floor(html.length * i / 5));
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  a.innerHTML = html;
+  document.getElementById("stop").style.display = "none";
+};
+</script>

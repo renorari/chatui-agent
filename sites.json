@@ -1,0 +1,48 @@
+{
+  "chatgpt": {
+    "url": "https://chatgpt.com/",
+    "newChatUrl": "https://chatgpt.com/",
+    "input": "#prompt-textarea",
+    "send": "[data-testid=\"send-button\"]",
+    "stop": "[data-testid=\"stop-button\"]",
+    "assistant": "[data-message-author-role=\"assistant\"]",
+    "ignore": [
+      "button",
+      "[aria-hidden=\"true\"]"
+    ]
+  },
+  "claude": {
+    "url": "https://claude.ai/new",
+    "newChatUrl": "https://claude.ai/new",
+    "input": "div[contenteditable=\"true\"].ProseMirror",
+    "send": "button[aria-label=\"Send message\"], button[aria-label=\"メッセージを送信\"]",
+    "stop": "[data-is-streaming=\"true\"], button[aria-label=\"Stop response\"]",
+    "assistant": "[data-is-streaming]",
+    "ignore": [
+      "button"
+    ]
+  },
+  "gemini": {
+    "url": "https://gemini.google.com/app",
+    "newChatUrl": "https://gemini.google.com/app",
+    "input": "rich-textarea div[contenteditable=\"true\"]",
+    "send": "button.send-button",
+    "stop": "button.stop, button[aria-label*=\"Stop\"], button[aria-label*=\"停止\"]",
+    "assistant": "message-content",
+    "ignore": [
+      "button",
+      ".code-block-decoration"
+    ]
+  },
+  "copilot": {
+    "url": "https://copilot.cloud.microsoft/chat",
+    "newChatUrl": "https://copilot.cloud.microsoft/chat",
+    "input": "#m365-chat-editor-target-element",
+    "send": "button.fai-SendButton[aria-label=\"送信\"], button.fai-SendButton[aria-label=\"Send\"]",
+    "stop": "button.fai-SendButton[aria-label*=\"停止\"], button.fai-SendButton[aria-label*=\"Stop\"]",
+    "assistant": "[data-testid=\"markdown-reply\"]",
+    "ignore": [
+      "button"
+    ]
+  }
+}

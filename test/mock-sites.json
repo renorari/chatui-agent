@@ -1,0 +1,10 @@
+{
+  "mock": {
+    "url": "http://127.0.0.1:8799/mock-chat.html",
+    "input": "#input",
+    "send": "#send",
+    "stop": "#stop:visible",
+    "assistant": ".assistant",
+    "ignore": ["button"]
+  }
+}

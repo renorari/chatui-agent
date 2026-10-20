@@ -1,0 +1,20 @@
+{
+  "name": "chatui-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Drive any browser AI chat UI as an OpenAI-compatible agent backend for VS Code / Xcode",
+  "scripts": {
+    "start": "node src/server.ts",
+    "check": "tsc --noEmit",
+    "test": "sh test/e2e.sh",
+    "acp": "node src/acp.ts"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
