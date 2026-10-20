@@ -52,13 +52,14 @@ export class Engine {
   static async create(backend: Backend, site: SiteConfig, opts: DriverOptions, maxTabs: number): Promise<Engine> {
     const engine = new Engine(backend, site, opts, maxTabs);
     const tab = await engine.openTab();
-    await tab.waitForInput();
     engine.sessions.push({ tab, history: [], busy: false, lastUsed: 1 });
     return engine;
   }
 
   private async openTab(): Promise<ChatTab> {
-    return new ChatTab(await this.backend.newPage(this.site.newChatUrl ?? this.site.url), this.site, this.opts);
+    const tab = new ChatTab(await this.backend.newPage(this.site.newChatUrl ?? this.site.url), this.site, this.opts);
+    await tab.prepare();
+    return tab;
   }
 
   get tabCount(): number {

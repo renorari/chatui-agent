@@ -121,6 +121,7 @@ npm test   # E2E against a local mock chat page in headless Chrome (OpenAI / Ant
 
 - Token counts (`usage`) are always 0, and `count_tokens` is a character-based estimate.
 - Images and attachments are not supported (they are replaced with a placeholder).
+- M365 Copilot runs with temporary chat turned on (`temporaryChatToggle`). Otherwise its memory feature pulls in earlier conversations and it answers from those instead of using the tools.
 - Long code blocks can be virtualized (only the visible part is rendered), and in that case they may come back incomplete.
 - Automating a chat service can violate its terms of use. Check each service's terms, and your organization's policy for M365 Copilot.
 - Do not connect this to other companies' customer-support chatbots. They exist to answer questions about that company's products, and routing a coding agent through them is unauthorized use outside their purpose. It also directly costs them money on inference.

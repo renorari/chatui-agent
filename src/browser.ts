@@ -15,6 +15,8 @@ export type SiteConfig = {
   ignore?: string[];
   /** Code blocks that are not plain <pre>: one element per line, with a separate language label. */
   codeBlock?: { selector: string; lines: string; lang?: string };
+  /** Toggle button switched on for every new chat, e.g. a "temporary chat" mode that skips history and memory. */
+  temporaryChatToggle?: string;
   /** How text is put into a contenteditable input. Defaults to "paste". */
   inputMethod?: "paste" | "insertText";
 };
@@ -42,7 +44,16 @@ export class ChatTab {
   async newChat(): Promise<void> {
     await this.page.goto(this.site.newChatUrl ?? this.site.url);
     await sleep(1000);
+    await this.prepare();
+  }
+
+  /** Readies a freshly loaded chat page: waits for the input and applies per-chat toggles. */
+  async prepare(): Promise<void> {
     await this.waitForInput();
+    if (this.site.temporaryChatToggle) {
+      // The toggle may render a moment after the input.
+      for (let i = 0; i < 10 && !(await this.page.evaluate(pressToggle, this.site.temporaryChatToggle)); i++) await sleep(300);
+    }
   }
 
   /** Waits for the input to appear. Blocks indefinitely so the user can log in by hand. */
@@ -136,6 +147,14 @@ function clickIfReady(selector: string): boolean {
   if (!btn || btn.disabled || btn.getAttribute("aria-disabled") === "true") return false;
   btn.click();
   return true;
+}
+
+/** Turns an aria-pressed toggle on. Returns true once it is on. */
+function pressToggle(selector: string): boolean {
+  const btn = document.querySelector(selector) as HTMLButtonElement | null;
+  if (!btn) return false;
+  if (btn.getAttribute("aria-pressed") !== "true") btn.click();
+  return btn.getAttribute("aria-pressed") === "true";
 }
 
 function pressEnter(selector: string): void {
